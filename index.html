@@ -61,19 +61,51 @@
       font-size: 1.4rem;
     }
 
-    label {
-      display: block;
-      margin-bottom: 0.75rem;
-      font-size: 1.5rem;
+    .form-section label {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.5rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background-color: #ffffff;
+      font-size: 1.25rem;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .form-section label:hover {
+      background-color: #f9fafb;
+    }
+
+    input[type="radio"]:checked + span {
+      font-weight: bold;
+      color: var(--primary-color);
     }
 
     input[type="radio"], input[type="number"] {
       margin-right: 0.5rem;
     }
 
+    input[type="number"] {
+      margin-left: 0.5rem;
+      font-size: 1rem;
+      padding: 0.25rem;
+      width: 80px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+    }
+
     #categoryOptions {
       margin-left: 0.5rem;
       margin-top: 0.5rem;
+    }
+
+    #categoryOptions label {
+      margin-left: 1rem;
+      font-size: 1.2rem;
+      background-color: #f8fafc;
     }
 
     .action {
@@ -99,6 +131,9 @@
       margin-top: 1rem;
       box-shadow: 0 1px 5px rgba(115, 245, 143, 0.05);
       border: 1px solid #d1d5db;
+      position: sticky;
+      top: 0rem;
+      z-index: 500;
     }
 
     .question-meta {
@@ -124,7 +159,7 @@
 
     .question-text {
       white-space: pre-line;
-      font-size: 1.525rem;
+      font-size: 1.25rem;
       line-height: 2;
       color: #111827;
       font-weight: 500;
@@ -142,34 +177,63 @@
     }
 
     .tree-button {
-      display: block;
-      margin: 6px 0;
-      padding: 1rem;
-      border: 1px solid #d1d5db;
-      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin: 4px 0;
+      padding: 0.8rem 1rem;
+      border-radius: 8px;
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
       cursor: pointer;
-      text-align: left;
-      font-size: 1rem;
+      font-size: 1.05rem;
+      font-weight: 500;
+      transition: all 0.2s ease-in-out;
+      width: 100%;
+      box-sizing: border-box;
     }
 
-    .tree-button:hover { background: #f3f4f6; }
-    .tree-level { margin-left: 1rem; margin-top: 0.3rem; }
-    .hidden { display: none; }
-    .selected {
-      background: var(--primary-color) !important;
-      color: white !important;
-      border-color: var(--primary-color) !important;
+    .tree-button:hover {
+      background-color: #f3f4f6;
     }
 
-    .tree-depth-1 { background: #fee2e2; }
-    .tree-depth-2 { background: #e0f2fe; }
-    .tree-depth-3 { background: #ffffff; }
+    .tree-button.selected {
+      background-color: var(--primary-color);
+      color: white;
+      border-color: var(--primary-color);
+    }
+
+    .tree-level {
+      margin-left: 1rem;
+      margin-top: 0.3rem;
+      padding-left: 0.5rem;
+      border-left: 3px solid #e5e7eb;
+      transition: max-height 0.3s ease-out;
+    }
+
+    .tree-depth-1 {
+      background-color: #fef2f2;
+      font-weight: bold;
+    }
+
+    .tree-depth-2 {
+      background-color: #eff6ff;
+    }
+
+    .tree-depth-3 {
+      background-color: #ffffff;
+    }
+
+    .hidden {
+      display: none;
+    }
 
     .sticky-submit {
       position: fixed;
       bottom: 0;
       left: 0;
-      width: 95%;
+      width: 90%;
+      margin: 0 auto; 
       background: white;
       padding: 1rem;
       border-top: 1px solid #e5e7eb;
@@ -190,7 +254,7 @@
         font-size: 2.25rem;
       }
       .tree-button {
-        font-size: 1rem;
+        font-size: 0.7rem;
       }
     }
   </style>
@@ -212,9 +276,9 @@
       <h2>출제 기준</h2>
       <label><input type="radio" name="range" value="category" checked onchange="toggleOptions()"> 카테고리별</label>
       <div id="categoryOptions">
-        <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="category" value="1" checked> 관리체계 수립 및 운영</label>
-        <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="category" value="2"> 보호대책 요구사항</label>
-        <label>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<input type="radio" name="category" value="3"> 개인정보 처리 단계별 요구사항</label>
+        <label><input type="radio" name="category" value="1" checked> 관리체계 수립 및 운영</label>
+        <label><input type="radio" name="category" value="2"> 보호대책 요구사항</label>
+        <label><input type="radio" name="category" value="3"> 개인정보 처리 단계별 요구사항</label>
       </div>
       <label><input type="radio" name="range" value="random" onchange="toggleOptions()"> 전체 랜덤 
         <input type="number" id="questionCount" value="10" min="1" max="100" style="width: 60px;" />
