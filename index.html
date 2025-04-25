@@ -1,1 +1,389 @@
-hihi
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <title>ISMS-P 퀴즈</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 2rem;
+      color: #1f2937;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 2rem;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 900px;
+      margin: auto;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+    }
+
+    .form-section {
+      margin-bottom: 2rem;
+      padding: 1rem;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      background: #f9fafb;
+    }
+
+    .form-section h2 {
+      margin-top: 0;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: flex;
+      align-items: center;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+    }
+
+    input[type="radio"], input[type="number"] {
+      margin-right: 0.5rem;
+    }
+
+    #categoryOptions {
+      margin-left: 1rem;
+      margin-top: 0.5rem;
+    }
+
+    .action {
+      margin-top: 1rem;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      padding: 10px 16px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .action:hover {
+      background: #2563eb;
+    }
+
+    .question-area {
+      background: #f3f4f6;
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-top: 1rem;
+      box-shadow: 0 1px 5px rgba(0, 0, 0, 0.05);
+      border: 1px solid #d1d5db;
+    }
+
+    .question-meta {
+  margin-bottom: 1rem;
+  font-size: 0.95rem;
+}
+
+.question-tag {
+  display: inline-block;
+  background: #2563eb;
+  color: white;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.question-number {
+  color: #4b5563;
+  font-weight: 500;
+}
+
+    .question-text {
+      white-space: pre-line;
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: #374151;
+    }
+
+    .result, #progress {
+      margin-top: 1.5rem;
+      font-weight: bold;
+      font-size: 1.1rem;
+    }
+
+    .tree-menu {
+      margin-top: 1.5rem;
+    }
+
+    .tree-button {
+      display: block;
+      margin: 4px 0;
+      padding: 8px 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      cursor: pointer;
+      text-align: left;
+    }
+
+    .tree-button:hover { background: #f3f4f6; }
+    .tree-level { margin-left: 1rem; margin-top: 0.3rem; }
+    .hidden { display: none; }
+    .selected {
+      background: #2563eb !important;
+      color: white !important;
+      border-color: #2563eb !important;
+    }
+
+    .tree-depth-1 { background: #fee2e2; }
+    .tree-depth-2 { background: #e0f2fe; }
+    .tree-depth-3 { background: #e0fce9; }
+  </style>
+</head>
+<body>
+  <h1>ISMS-P 인증기준 퀴즈</h1>
+
+  <div class="card" id="setup">
+    <div class="form-section">
+      <h2>문제 유형</h2>
+      <label><input type="radio" name="mode" value="standard" checked> 인증기준</label>
+      <label><input type="radio" name="mode" value="check"> 주요 확인사항</label>
+      <label><input type="radio" name="mode" value="defect"> 결함사례</label>
+    </div>
+
+    <div class="form-section">
+      <h2>출제 기준</h2>
+      <label><input type="radio" name="range" value="category" checked onchange="toggleOptions()"> 카테고리별</label>
+      <div id="categoryOptions">
+        <label><input type="radio" name="category" value="1" checked> 관리체계 수립 및 운영</label>
+        <label><input type="radio" name="category" value="2"> 보호대책 요구사항</label>
+        <label><input type="radio" name="category" value="3"> 개인정보 처리 단계별 요구사항</label>
+      </div>
+      <label><input type="radio" name="range" value="random" onchange="toggleOptions()"> 전체 랜덤 
+        <input type="number" id="questionCount" value="5" min="1" max="100" style="width: 60px;" />
+      </label>
+    </div>
+
+    <button class="action" onclick="startQuiz()">시작</button>
+  </div>
+
+  <div class="card" id="quizArea" style="display:none;">
+    <div id="progress"></div>
+    <div class="question-area">
+      <div class="question-meta">
+        <span class="question-tag" id="questionTag"></span>
+        <span class="question-number" id="questionNumber"></span>
+      </div>
+      <div class="question-text" id="questionText"></div>
+    </div>
+    <div class="tree-menu" id="treeContainer"></div>
+    <button class="action" onclick="submitAnswer()">제출</button>
+  </div>
+
+  <div class="card" id="resultArea" style="display:none;">
+    <h2>퀴즈 결과</h2>
+    <canvas id="resultChart" width="300" height="300"></canvas>
+    <p class="result" id="resultText"></p>
+    <button class="action" id="retryButton" style="display:none;" onclick="retryQuiz()">틀린 문제 다시 풀기</button>
+    <button class="action" onclick="location.reload()">처음으로 돌아가기</button>
+  </div>
+
+  <script>
+    let data = [], quizList = [], current = 0, correctMap = [], wrongMap = [], answered = [], questionMode = '';
+    let selectedAnswer = null;
+
+    async function loadJSON() {
+      const res = await fetch("1sm5.json");
+      data = await res.json();
+      document.getElementById("setup").style.display = "block";
+    }
+
+    function toggleOptions() {
+      const range = document.querySelector("input[name='range']:checked").value;
+      document.getElementById("categoryOptions").style.display = (range === "category") ? "block" : "none";
+    }
+
+    function startQuiz() {
+      const mode = document.querySelector("input[name='mode']:checked").value;
+      const range = document.querySelector("input[name='range']:checked").value;
+      const detail = (range === 'category') ? document.querySelector("input[name='category']:checked").value : parseInt(document.getElementById("questionCount").value);
+      questionMode = mode;
+
+      const filtered = (range === 'category') ? data.filter(d => d.category.startsWith(detail + ".")) : [...data];
+      let pool = [];
+
+      for (const item of filtered) {
+        const source = mode === "check" ? item.check_items : mode === "defect" ? item.defect_cases : [item.standard];
+        for (const s of source) {
+          pool.push({ question: s, answer: item.standard_item });
+        }
+      }
+
+      quizList = (range === "random") ? shuffle(pool).slice(0, detail) : shuffle(pool);
+      correctMap = Array(quizList.length).fill(false);
+      wrongMap = Array(quizList.length).fill(false);
+      answered = Array(quizList.length).fill(false);
+      current = 0;
+
+      document.getElementById("setup").style.display = "none";
+      document.getElementById("quizArea").style.display = "block";
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = quizList[current];
+      document.getElementById("questionTag").textContent = {
+  standard: "인증기준",
+  check: "주요 확인사항",
+  defect: "결함사례"
+}[questionMode];
+
+document.getElementById("questionNumber").textContent = ` - [문제 ${current + 1}/${quizList.length}]`;
+      document.getElementById("questionText").textContent = q.question;
+      document.getElementById("progress").textContent = `정답: ${correctMap.filter(Boolean).length} / 오답: ${wrongMap.filter(Boolean).length}`;
+      selectedAnswer = null;
+      renderTreeMenu();
+    }
+
+    function renderTreeMenu() {
+      const tree = document.getElementById("treeContainer");
+      tree.innerHTML = '';
+      const grouped = {};
+
+      data.forEach(item => {
+        const [a, b, c] = item.category.split(".");
+        if (!grouped[a]) grouped[a] = {};
+        if (!grouped[a][b]) grouped[a][b] = {};
+        grouped[a][b][c] = item;
+      });
+
+      for (const a in grouped) {
+        const top = createButton(`${a}. ${getTopLabel(a)}`, () => toggleVisibility(`mid-${a}`), "tree-depth-1");
+        tree.appendChild(top);
+        const midWrap = document.createElement("div");
+        midWrap.className = "tree-level hidden";
+        midWrap.id = `mid-${a}`;
+        for (const b in grouped[a]) {
+          const midKey = `${a}.${b}`;
+          const midBtn = createButton(`${midKey}. ${getMidLabel(midKey)}`, () => toggleVisibility(`detail-${midKey}`), "tree-depth-2");
+          midWrap.appendChild(midBtn);
+          const detailWrap = document.createElement("div");
+          detailWrap.className = "tree-level hidden";
+          detailWrap.id = `detail-${midKey}`;
+          for (const c in grouped[a][b]) {
+            const item = grouped[a][b][c];
+            const label = `${item.category} - ${item.standard_item.replace(item.category, '').trim()}`;
+            const btn = createButton(label, () => {
+              document.querySelectorAll(".tree-button").forEach(b => b.classList.remove("selected"));
+              btn.classList.add("selected");
+              selectedAnswer = item.standard_item;
+            }, "tree-depth-3");
+            detailWrap.appendChild(btn);
+          }
+          midWrap.appendChild(detailWrap);
+        }
+        tree.appendChild(midWrap);
+      }
+    }
+
+    function submitAnswer() {
+      if (!selectedAnswer) return alert("선택지를 고르세요.");
+      const correct = quizList[current].answer.trim();
+      if (selectedAnswer.trim() === correct) {
+        correctMap[current] = true;
+        alert("✅ 정답입니다!");
+      } else {
+        wrongMap[current] = true;
+        alert("❌ 오답입니다. 다음 문제로 넘어갑니다.");
+      }
+      answered[current] = true;
+      current++;
+      if (current < quizList.length) renderQuestion();
+      else showResults();
+    }
+
+    function showResults() {
+      const score = correctMap.filter(Boolean).length;
+      const total = quizList.length;
+      const wrongCount = total - score;
+
+      document.getElementById("quizArea").style.display = "none";
+      document.getElementById("resultArea").style.display = "block";
+      document.getElementById("resultText").textContent = `총 ${total}문제 중 ${score}개 정답, ${wrongCount}개 오답입니다.`;
+
+      const ctx = document.getElementById('resultChart').getContext('2d');
+      new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: ['정답', '오답'],
+          datasets: [{
+            data: [score, wrongCount],
+            backgroundColor: ['#22c55e', '#ef4444']
+          }]
+        },
+        options: {
+          responsive: false,
+          plugins: {
+            legend: {
+              position: 'bottom'
+            }
+          }
+        }
+      });
+
+      if (wrongCount > 0) {
+        document.getElementById("retryButton").style.display = "inline-block";
+      }
+    }
+
+    function retryQuiz() {
+      const retryList = quizList.filter((_, i) => !correctMap[i]);
+      quizList = retryList;
+      correctMap = Array(quizList.length).fill(false);
+      wrongMap = Array(quizList.length).fill(false);
+      answered = Array(quizList.length).fill(false);
+      current = 0;
+
+      document.getElementById("resultArea").style.display = "none";
+      document.getElementById("quizArea").style.display = "block";
+      renderQuestion();
+    }
+
+    function toggleVisibility(id) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle("hidden");
+    }
+
+    function createButton(label, onClick, depthClass) {
+      const btn = document.createElement("button");
+      btn.textContent = label;
+      btn.className = `tree-button ${depthClass}`;
+      btn.onclick = onClick;
+      return btn;
+    }
+
+    function getTopLabel(n) {
+      return { "1": "관리체계 수립 및 운영", "2": "보호대책 요구사항", "3": "개인정보 처리 단계별 요구사항" }[n] || '';
+    }
+
+    function getMidLabel(mid) {
+      return {
+        '1.1': '관리체계 기반 마련', '1.2': '위험 관리', '1.3': '관리체계 운영', '1.4': '점검 및 개선',
+        '2.1': '정책,조직,자산 관리', '2.2': '인적 보안', '2.3': '외부자 보안', '2.4': '물리 보안',
+        '2.5': '인증 및 권한관리', '2.6': '접근통제', '2.7': '암호화 적용', '2.8': '정보시스템 도입 및 개발 보안',
+        '2.9': '시스템 및 서비스 운영관리', '2.10': '시스템 및 서비스 보안관리', '2.11': '사고 예방 및 대응', '2.12': '재해복구',
+        '3.1': '개인정보 수집 시 보호조치', '3.2': '개인정보 보유 및 이용 시 보호조치', '3.3': '개인정보 제공 시 보호조치', '3.4': '개인정보 파기 시 보호조치', '3.5': '정보주체 권리보호'
+      }[mid] || '';
+    }
+
+    function shuffle(arr) {
+      return arr.sort(() => Math.random() - 0.5);
+    }
+
+    loadJSON();
+  </script>
+</body>
+</html>
