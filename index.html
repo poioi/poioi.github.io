@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>ISMS-P 퀴즈</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
     :root {
       --primary-color: #2563eb;
@@ -414,20 +415,111 @@ document.getElementById("questionNumber").textContent = ` - [문제 ${current + 
     }
 
     function submitAnswer() {
-      if (!selectedAnswer) return alert("선택지를 고르세요.");
-      const correct = quizList[current].answer.trim();
-      if (selectedAnswer.trim() === correct) {
-        correctMap[current] = true;
-        alert("✅ 정답입니다!");
-      } else {
-        wrongMap[current] = true;
-        alert("❌ 오답입니다. 다음 문제로 넘어갑니다.");
-      }
-      answered[current] = true;
-      current++;
-      if (current < quizList.length) renderQuestion();
-      else showResults();
+  if (!selectedAnswer) {
+    return Swal.fire({
+      icon: 'warning',
+      title: '선택해주세요!',
+      text: '정답 항목을 골라주세요.',
+      confirmButtonText: '확인'
+    });
+  }
+
+  const currentQuiz = quizList[current];
+  const correct = currentQuiz.answer.trim();
+  const isCorrect = selectedAnswer.trim() === correct;
+  const original = data.find(d => d.standard_item === correct);
+
+  answered[current] = true;
+  if (isCorrect) correctMap[current] = true;
+  else wrongMap[current] = true;
+
+  // 유형별 라벨
+  const typeLabelMap = {
+    standard: '인증기준',
+    check: '주요 확인사항',
+    defect: '결함 사례'
+  };
+
+  let explanationHTML = '';
+
+  if (original) {
+    // 인증기준 문제
+    if (questionMode === "standard" && original.standard) {
+      explanationHTML += `
+        <div style="margin-bottom: 1rem;">
+          <span style="display:inline-block; background:#2563eb; color:white; padding:0.3rem 0.6rem; border-radius:0.5rem; font-weight:bold;">
+            ${typeLabelMap.standard}
+          </span><br>
+          <div style="margin-top: 0.5rem; background: #f9fafb; padding: 1rem; border-radius: 10px; line-height: 1.7;">
+            ${original.standard}
+          </div>
+        </div>`;
     }
+
+    // 주요 확인사항 문제
+    if (questionMode === "check" && original.check_items?.length) {
+      explanationHTML += `
+        <div style="margin-bottom: 1rem;">
+          <span style="display:inline-block; background:#2563eb; color:white; padding:0.3rem 0.6rem; border-radius:0.5rem; font-weight:bold;">
+            ${typeLabelMap.check}
+          </span>
+      `;
+
+      original.check_items.forEach((item, idx) => {
+        explanationHTML += `
+          <div style="margin-top: 0.5rem; background: #f9fafb; padding: 1rem; border-radius: 10px; line-height: 1.7;">
+            <strong style="color:#2563eb;">항목 ${idx + 1}</strong><br>
+            ${item}
+          </div>
+        `;
+      });
+
+      explanationHTML += `</div>`;
+    }
+
+    // 결함사례 문제
+    if (questionMode === "defect" && original.defect_cases?.length) {
+      explanationHTML += `
+        <div style="margin-bottom: 1rem;">
+          <span style="display:inline-block; background:#2563eb; color:white; padding:0.3rem 0.6rem; border-radius:0.5rem; font-weight:bold;">
+            ${typeLabelMap.defect}
+          </span>
+      `;
+
+      original.defect_cases.forEach((caseText, index) => {
+        explanationHTML += `
+          <div style="margin-top: 0.5rem; background: #f9fafb; padding: 1rem; border-left: 4px solid #2563eb; border-radius: 10px; line-height: 1.7;">
+            <strong style="color:#2563eb;">사례 ${index + 1}</strong><br>
+            ${caseText}
+          </div>
+        `;
+      });
+
+      explanationHTML += `</div>`;
+    }
+  }
+
+  // SweetAlert 팝업
+  Swal.fire({
+    icon: isCorrect ? 'success' : 'error',
+    title: isCorrect ? '정답입니다!' : '오답입니다!',
+    html: `
+      <div style="text-align: left; font-size: 1rem; line-height: 1.6;">
+        <strong>정답:</strong> ${correct}<br><br>
+        ${explanationHTML}
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: '다음문제',
+    cancelButtonText: '닫기',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      current++;
+      current < quizList.length ? renderQuestion() : showResults();
+    }
+  });
+}
 
     function showResults() {
       const score = correctMap.filter(Boolean).length;
