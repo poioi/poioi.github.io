@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ISMS-P 퀴즈</title>
+  <title>ISMS-P</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <style>
@@ -266,7 +266,7 @@
 </head>
 <body>
   <button class="home-button" onclick="location.reload()">홈</button>
-  <h1>ISMS-P 인증기준 퀴즈</h1>
+  <h1>ISMS-P 인증기준</h1>
 
 
   <div class="card" id="setup">
@@ -332,31 +332,56 @@
     }
 
     function startQuiz() {
-      const mode = document.querySelector("input[name='mode']:checked").value;
-      const range = document.querySelector("input[name='range']:checked").value;
-      const detail = (range === 'category') ? document.querySelector("input[name='category']:checked").value : parseInt(document.getElementById("questionCount").value);
-      questionMode = mode;
+  const mode = document.querySelector("input[name='mode']:checked").value;
+  const range = document.querySelector("input[name='range']:checked").value;
+  const detail = (range === 'category') ? document.querySelector("input[name='category']:checked").value : parseInt(document.getElementById("questionCount").value);
+  questionMode = mode;
 
-      const filtered = (range === 'category') ? data.filter(d => d.category.startsWith(detail + ".")) : [...data];
-      let pool = [];
+  const filtered = (range === 'category') ? data.filter(d => d.category.startsWith(detail + ".")) : [...data];
+  let pool = [];
 
-      for (const item of filtered) {
-        const source = mode === "check" ? item.check_items : mode === "defect" ? item.defect_cases : [item.standard];
-        for (const s of source) {
-          pool.push({ question: s, answer: item.standard_item });
-        }
+  if (mode === "defect") {
+    const groupedByStandard = {};
+
+    for (const item of filtered) {
+      const key = item.standard_item;
+      if (!groupedByStandard[key] && Array.isArray(item.defect_cases) && item.defect_cases.length > 0) {
+        const randomCase = item.defect_cases[Math.floor(Math.random() * item.defect_cases.length)];
+        groupedByStandard[key] = { question: randomCase, answer: key };
       }
-
-      quizList = (range === "random") ? shuffle(pool).slice(0, detail) : shuffle(pool);
-      correctMap = Array(quizList.length).fill(false);
-      wrongMap = Array(quizList.length).fill(false);
-      answered = Array(quizList.length).fill(false);
-      current = 0;
-
-      document.getElementById("setup").style.display = "none";
-      document.getElementById("quizArea").style.display = "block";
-      renderQuestion();
     }
+
+    pool = Object.values(groupedByStandard);
+  } else if (mode === "check") {
+    const groupedByStandard = {};
+
+    for (const item of filtered) {
+      const key = item.standard_item;
+      if (!groupedByStandard[key] && Array.isArray(item.check_items) && item.check_items.length > 0) {
+        const randomCheck = item.check_items[Math.floor(Math.random() * item.check_items.length)];
+        groupedByStandard[key] = { question: randomCheck, answer: key };
+      }
+    }
+
+    pool = Object.values(groupedByStandard);
+  } else {
+    for (const item of filtered) {
+      if (item.standard) {
+        pool.push({ question: item.standard, answer: item.standard_item });
+      }
+    }
+  }
+
+  quizList = (range === "random") ? shuffle(pool).slice(0, detail) : shuffle(pool);
+  correctMap = Array(quizList.length).fill(false);
+  wrongMap = Array(quizList.length).fill(false);
+  answered = Array(quizList.length).fill(false);
+  current = 0;
+
+  document.getElementById("setup").style.display = "none";
+  document.getElementById("quizArea").style.display = "block";
+  renderQuestion();
+}
 
     function renderQuestion() {
       const q = quizList[current];
